@@ -13,8 +13,10 @@ import { ALL_MATH_TOPICS } from '../data/curriculum/math';
 import { EDUCATIONAL_LEVELS } from '../data/curriculum/levels';
 import { loadUserProgress } from '../services/storage';
 import { UserProgressData } from '../types/curriculum';
+import { useAppTheme } from '../context/ThemeContext';
 
 export default function LibraryAndNotebookScreen() {
+  const { colors, isDark, toggleTheme } = useAppTheme();
   const [activeSubTab, setActiveSubTab] = useState<'REFERENCE' | 'NOTEBOOK' | 'COMPETENCE'>('REFERENCE');
   const [progress, setProgress] = useState<UserProgressData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,7 +37,6 @@ export default function LibraryAndNotebookScreen() {
     setRefreshing(false);
   };
 
-  // Filtrado de temas para fichas técnicas
   const filteredTopics = ALL_MATH_TOPICS.filter((t) => {
     const matchSearch =
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,39 +48,81 @@ export default function LibraryAndNotebookScreen() {
   const notebookEntries = progress ? Object.values(progress.notebook) : [];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
-        {/* Cabecera */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Biblioteca & Cuaderno</Text>
-          <Text style={styles.subtitle}>
-            Tu manual técnico de referencia para el trabajo y apuntes personales Feynman
-          </Text>
+        {/* Cabecera con Toggle de Tema */}
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.cardBorder }]}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Biblioteca & Cuaderno</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Manual técnico de consulta rápida y apuntes personales Feynman
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.themeToggleBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.cardBorder }]}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.themeToggleIcon}>{isDark ? '☀️ Claro' : '🌙 Oscuro'}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Pestañas Superiores */}
-        <View style={styles.tabSelector}>
+        <View style={[styles.tabSelector, { backgroundColor: colors.surface, borderBottomColor: colors.cardBorder }]}>
           <TouchableOpacity
-            style={[styles.subTab, activeSubTab === 'REFERENCE' && styles.subTabActive]}
+            style={[
+              styles.subTab,
+              { backgroundColor: colors.surfaceSubtle },
+              activeSubTab === 'REFERENCE' && { backgroundColor: colors.accentLight, borderColor: colors.accent, borderWidth: 1 },
+            ]}
             onPress={() => setActiveSubTab('REFERENCE')}
           >
-            <Text style={[styles.subTabText, activeSubTab === 'REFERENCE' && styles.subTabTextActive]}>
+            <Text
+              style={[
+                styles.subTabText,
+                { color: colors.textSecondary },
+                activeSubTab === 'REFERENCE' && { color: colors.accent, fontWeight: '700' },
+              ]}
+            >
               📖 Fichas Técnicas
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.subTab, activeSubTab === 'NOTEBOOK' && styles.subTabActive]}
+            style={[
+              styles.subTab,
+              { backgroundColor: colors.surfaceSubtle },
+              activeSubTab === 'NOTEBOOK' && { backgroundColor: colors.accentLight, borderColor: colors.accent, borderWidth: 1 },
+            ]}
             onPress={() => setActiveSubTab('NOTEBOOK')}
           >
-            <Text style={[styles.subTabText, activeSubTab === 'NOTEBOOK' && styles.subTabTextActive]}>
+            <Text
+              style={[
+                styles.subTabText,
+                { color: colors.textSecondary },
+                activeSubTab === 'NOTEBOOK' && { color: colors.accent, fontWeight: '700' },
+              ]}
+            >
               📝 Mis Notas ({notebookEntries.length})
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.subTab, activeSubTab === 'COMPETENCE' && styles.subTabActive]}
+            style={[
+              styles.subTab,
+              { backgroundColor: colors.surfaceSubtle },
+              activeSubTab === 'COMPETENCE' && { backgroundColor: colors.accentLight, borderColor: colors.accent, borderWidth: 1 },
+            ]}
             onPress={() => setActiveSubTab('COMPETENCE')}
           >
-            <Text style={[styles.subTabText, activeSubTab === 'COMPETENCE' && styles.subTabTextActive]}>
+            <Text
+              style={[
+                styles.subTabText,
+                { color: colors.textSecondary },
+                activeSubTab === 'COMPETENCE' && { color: colors.accent, fontWeight: '700' },
+              ]}
+            >
               📊 Competencia
             </Text>
           </TouchableOpacity>
@@ -88,16 +131,22 @@ export default function LibraryAndNotebookScreen() {
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollInner}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
           {/* VISTA 1: FICHAS TÉCNICAS */}
           {activeSubTab === 'REFERENCE' && (
             <View>
-              {/* Buscador de fórmulas y conceptos */}
               <TextInput
-                style={styles.searchInput}
-                placeholder="Buscar fórmula, tema o código (ej: d/dx, pendiente, MAT-2)..."
-                placeholderTextColor="#90A4AE"
+                style={[
+                  styles.searchInput,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.cardBorder,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                placeholder="Buscar fórmula, ley o código (ej: d/dx, PEMDAS, MAT-1.2)..."
+                placeholderTextColor={colors.textMuted}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -107,46 +156,55 @@ export default function LibraryAndNotebookScreen() {
                 const isValidated = progress?.topics[topic.id]?.status === 'VALIDATED';
 
                 return (
-                  <View key={topic.id} style={styles.referenceCard}>
+                  <View
+                    key={topic.id}
+                    style={[
+                      styles.referenceCard,
+                      { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                      isValidated && { borderLeftWidth: 4, borderLeftColor: colors.success },
+                    ]}
+                  >
                     <View style={styles.cardHeader}>
                       <View style={styles.badgeRow}>
-                        <Text style={[styles.codeBadge, { backgroundColor: level.color + '20', color: level.color }]}>
+                        <Text style={[styles.codeBadge, { backgroundColor: level.color + '25', color: level.color }]}>
                           {topic.code}
                         </Text>
-                        <Text style={styles.levelBadge}>{level.name}</Text>
+                        <Text style={[styles.levelBadge, { color: colors.textMuted }]}>{level.name}</Text>
                       </View>
                       {isValidated && (
-                        <View style={styles.validatedBadge}>
-                          <Text style={styles.validatedBadgeText}>✓ Validado en Práctica</Text>
+                        <View style={[styles.validatedBadge, { backgroundColor: colors.successLight }]}>
+                          <Text style={[styles.validatedBadgeText, { color: colors.success }]}>✓ Validado</Text>
                         </View>
                       )}
                     </View>
 
-                    <Text style={styles.topicTitle}>{topic.title}</Text>
+                    <Text style={[styles.topicTitle, { color: colors.textPrimary }]}>{topic.title}</Text>
 
                     {/* Fórmula Destacada */}
-                    <View style={styles.formulaBox}>
-                      <Text style={styles.formulaLabel}>FÓRMULA / LEY FUNDAMENTAL:</Text>
-                      <Text style={styles.formulaText}>{topic.referenceCard.keyFormula}</Text>
+                    <View style={[styles.formulaBox, { backgroundColor: colors.surfaceSubtle }]}>
+                      <Text style={[styles.formulaLabel, { color: colors.textMuted }]}>FÓRMULA / LEY FUNDAMENTAL:</Text>
+                      <Text style={[styles.formulaText, { color: colors.accent }]}>{topic.referenceCard.keyFormula}</Text>
                     </View>
 
                     {/* Concepto Central */}
                     <View style={styles.conceptBox}>
-                      <Text style={styles.conceptLabel}>Principio Esencial:</Text>
-                      <Text style={styles.conceptText}>{topic.referenceCard.coreConcept}</Text>
+                      <Text style={[styles.conceptLabel, { color: colors.textPrimary }]}>Principio Esencial:</Text>
+                      <Text style={[styles.conceptText, { color: colors.textSecondary }]}>{topic.referenceCard.coreConcept}</Text>
                     </View>
 
-                    {/* Cuándo usar en la vida real */}
-                    <View style={styles.whenBox}>
-                      <Text style={styles.whenLabel}>🛠️ Aplicación Laboral / Práctica:</Text>
-                      <Text style={styles.whenText}>{topic.referenceCard.whenToUse}</Text>
+                    {/* Aplicación Laboral */}
+                    <View style={[styles.whenBox, { backgroundColor: colors.warningLight }]}>
+                      <Text style={[styles.whenLabel, { color: colors.warning }]}>🛠️ Aplicación en el Trabajo / Mundo Real:</Text>
+                      <Text style={[styles.whenText, { color: isDark ? '#FED7AA' : '#78350F' }]}>
+                        {topic.referenceCard.whenToUse}
+                      </Text>
                     </View>
 
                     {/* Reglas Rápidas */}
                     <View style={styles.rulesBox}>
-                      <Text style={styles.rulesLabel}>Reglas Rápidas:</Text>
+                      <Text style={[styles.rulesLabel, { color: colors.textPrimary }]}>Reglas Prácticas:</Text>
                       {topic.referenceCard.quickRules.map((rule, idx) => (
-                        <Text key={idx} style={styles.ruleItem}>• {rule}</Text>
+                        <Text key={idx} style={[styles.ruleItem, { color: colors.textSecondary }]}>• {rule}</Text>
                       ))}
                     </View>
                   </View>
@@ -159,36 +217,48 @@ export default function LibraryAndNotebookScreen() {
           {activeSubTab === 'NOTEBOOK' && (
             <View>
               {notebookEntries.length === 0 ? (
-                <View style={styles.emptyCard}>
+                <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                   <Text style={styles.emptyIcon}>📓</Text>
-                  <Text style={styles.emptyTitle}>Tu Cuaderno está esperando tu primera sesión</Text>
-                  <Text style={styles.emptyDesc}>
-                    Cuando completes y valides cualquier tema del temario explicando el concepto central con tus propias palabras (Técnica Feynman), tus notas se archivarán aquí automáticamente para tu consulta permanente.
+                  <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                    Tu Cuaderno de Estudio está esperando tu primera sesión
+                  </Text>
+                  <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+                    Cuando completes cualquier tema del temario y redactes la explicación con tus propias palabras (Técnica Feynman), tus apuntes personales se archivarán aquí automáticamente como material de consulta permanente.
                   </Text>
                 </View>
               ) : (
                 notebookEntries.map((entry) => {
                   const level = EDUCATIONAL_LEVELS[entry.levelId];
                   return (
-                    <View key={entry.topicId} style={styles.notebookCard}>
+                    <View
+                      key={entry.topicId}
+                      style={[
+                        styles.notebookCard,
+                        { backgroundColor: colors.card, borderColor: colors.cardBorder, borderLeftColor: '#8B5CF6' },
+                      ]}
+                    >
                       <View style={styles.cardHeader}>
-                        <Text style={[styles.codeBadge, { backgroundColor: level.color + '20', color: level.color }]}>
+                        <Text style={[styles.codeBadge, { backgroundColor: level.color + '25', color: level.color }]}>
                           {level.name}
                         </Text>
-                        <Text style={styles.dateText}>
+                        <Text style={[styles.dateText, { color: colors.textMuted }]}>
                           {new Date(entry.validatedAt).toLocaleDateString()}
                         </Text>
                       </View>
 
-                      <Text style={styles.topicTitle}>{entry.topicTitle}</Text>
+                      <Text style={[styles.topicTitle, { color: colors.textPrimary }]}>{entry.topicTitle}</Text>
 
-                      <View style={styles.feynmanEntryBox}>
-                        <Text style={styles.feynmanEntryLabel}>Tu Explicación (Técnica Feynman):</Text>
-                        <Text style={styles.feynmanEntryText}>"{entry.feynmanExplanation}"</Text>
+                      <View style={[styles.feynmanEntryBox, { backgroundColor: isDark ? '#2E1065' : '#F3E5F5' }]}>
+                        <Text style={[styles.feynmanEntryLabel, { color: isDark ? '#DDD6FE' : '#6A1B9A' }]}>
+                          Tu Explicación (Técnica Feynman):
+                        </Text>
+                        <Text style={[styles.feynmanEntryText, { color: isDark ? '#EDE9FE' : '#3B0764' }]}>
+                          "{entry.feynmanExplanation}"
+                        </Text>
                       </View>
 
                       <View style={styles.confidenceRow}>
-                        <Text style={styles.confidenceNote}>Autoconfianza registrada:</Text>
+                        <Text style={[styles.confidenceNote, { color: colors.textMuted }]}>Autoconfianza demostrada:</Text>
                         <Text style={styles.starsNote}>{'★'.repeat(entry.selfConfidence)}</Text>
                       </View>
                     </View>
@@ -201,10 +271,12 @@ export default function LibraryAndNotebookScreen() {
           {/* VISTA 3: DESGLOSE DE COMPETENCIA */}
           {activeSubTab === 'COMPETENCE' && (
             <View>
-              <View style={styles.competenceOverviewCard}>
-                <Text style={styles.competenceTitle}>Filosofía de Medición de Competencia</Text>
-                <Text style={styles.competenceText}>
-                  A diferencia de las aplicaciones que usan rachas adictivas para obligarte a entrar todos los días, este sistema mide únicamente tu **evidencia de dominio demostrada**: problemas resueltos, falacias identificadas y síntesis conceptuales archivadas.
+              <View style={[styles.competenceOverviewCard, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
+                <Text style={[styles.competenceTitle, { color: colors.success }]}>
+                  Dominio Demostrado vs. Rachas Artificiales
+                </Text>
+                <Text style={[styles.competenceText, { color: isDark ? '#DCFCE7' : '#14532D' }]}>
+                  En esta app no hay penalizaciones por no entrar en días o semanas. El progreso mide exclusivamente tu dominio validado mediante la resolución de problemas y la capacidad de explicar conceptos con tus palabras.
                 </Text>
               </View>
 
@@ -217,16 +289,16 @@ export default function LibraryAndNotebookScreen() {
                 const pct = Math.round((validatedInLvl / topicsInLvl.length) * 100);
 
                 return (
-                  <View key={lvl.id} style={styles.levelProgressCard}>
+                  <View key={lvl.id} style={[styles.levelProgressCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                     <View style={styles.levelProgressHeader}>
                       <Text style={[styles.levelProgressName, { color: lvl.color }]}>{lvl.name}</Text>
-                      <Text style={styles.levelProgressCount}>
+                      <Text style={[styles.levelProgressCount, { color: colors.textPrimary }]}>
                         {validatedInLvl} / {topicsInLvl.length} ({pct}%)
                       </Text>
                     </View>
-                    <Text style={styles.levelProgressSub}>{lvl.categoryName}</Text>
+                    <Text style={[styles.levelProgressSub, { color: colors.textMuted }]}>{lvl.categoryName}</Text>
 
-                    <View style={styles.lvlProgressBarTrack}>
+                    <View style={[styles.lvlProgressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
                       <View
                         style={[
                           styles.lvlProgressBarFill,
@@ -248,36 +320,46 @@ export default function LibraryAndNotebookScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
   },
   container: {
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#ECEFF1',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  themeToggleBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginLeft: 8,
+  },
+  themeToggleIcon: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1A237E',
   },
   subtitle: {
     fontSize: 12,
-    color: '#546E7A',
     marginTop: 2,
   },
   tabSelector: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#ECEFF1',
     gap: 8,
   },
   subTab: {
@@ -285,21 +367,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: 'center',
     borderRadius: 8,
-    backgroundColor: '#F5F7FA',
-  },
-  subTabActive: {
-    backgroundColor: '#E1F5FE',
-    borderWidth: 1,
-    borderColor: '#0288D1',
   },
   subTabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#546E7A',
-  },
-  subTabTextActive: {
-    color: '#0288D1',
-    fontWeight: '700',
   },
   scroll: {
     flex: 1,
@@ -309,22 +380,17 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#CFD8DC',
     borderRadius: 10,
     padding: 12,
     fontSize: 13,
-    color: '#263238',
     marginBottom: 14,
   },
   referenceCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -346,11 +412,9 @@ const styles = StyleSheet.create({
   },
   levelBadge: {
     fontSize: 11,
-    color: '#78909C',
     fontWeight: '600',
   },
   validatedBadge: {
-    backgroundColor: '#E8F5E9',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -358,16 +422,13 @@ const styles = StyleSheet.create({
   validatedBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#2E7D32',
   },
   topicTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A237E',
     marginBottom: 10,
   },
   formulaBox: {
-    backgroundColor: '#ECEFF1',
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
@@ -375,13 +436,11 @@ const styles = StyleSheet.create({
   formulaLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#546E7A',
     marginBottom: 4,
   },
   formulaText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0D47A1',
     fontFamily: 'monospace',
   },
   conceptBox: {
@@ -390,16 +449,13 @@ const styles = StyleSheet.create({
   conceptLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#37474F',
     marginBottom: 2,
   },
   conceptText: {
     fontSize: 13,
-    color: '#455A64',
     lineHeight: 18,
   },
   whenBox: {
-    backgroundColor: '#FFF8E1',
     padding: 10,
     borderRadius: 8,
     marginBottom: 8,
@@ -407,12 +463,10 @@ const styles = StyleSheet.create({
   whenLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#F57C00',
     marginBottom: 2,
   },
   whenText: {
     fontSize: 12,
-    color: '#5D4037',
     lineHeight: 16,
   },
   rulesBox: {
@@ -421,22 +475,18 @@ const styles = StyleSheet.create({
   rulesLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#37474F',
     marginBottom: 4,
   },
   ruleItem: {
     fontSize: 12,
-    color: '#607D8B',
     lineHeight: 16,
     marginBottom: 2,
   },
   emptyCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     marginTop: 20,
   },
   emptyIcon: {
@@ -446,32 +496,25 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A237E',
     textAlign: 'center',
     marginBottom: 8,
   },
   emptyDesc: {
     fontSize: 13,
-    color: '#546E7A',
     textAlign: 'center',
     lineHeight: 19,
   },
   notebookCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderLeftWidth: 4,
-    borderLeftColor: '#6A1B9A',
   },
   dateText: {
     fontSize: 11,
-    color: '#90A4AE',
   },
   feynmanEntryBox: {
-    backgroundColor: '#F3E5F5',
     padding: 12,
     borderRadius: 8,
     marginVertical: 8,
@@ -479,12 +522,10 @@ const styles = StyleSheet.create({
   feynmanEntryLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6A1B9A',
     marginBottom: 4,
   },
   feynmanEntryText: {
     fontSize: 13,
-    color: '#4A148C',
     fontStyle: 'italic',
     lineHeight: 18,
   },
@@ -496,38 +537,31 @@ const styles = StyleSheet.create({
   },
   confidenceNote: {
     fontSize: 11,
-    color: '#78909C',
   },
   starsNote: {
     fontSize: 16,
-    color: '#FFA000',
+    color: '#F59E0B',
   },
   competenceOverviewCard: {
-    backgroundColor: '#E8F5E9',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
   },
   competenceTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1B5E20',
     marginBottom: 6,
   },
   competenceText: {
     fontSize: 13,
-    color: '#2E7D32',
     lineHeight: 18,
   },
   levelProgressCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   levelProgressHeader: {
     flexDirection: 'row',
@@ -541,17 +575,14 @@ const styles = StyleSheet.create({
   levelProgressCount: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#37474F',
   },
   levelProgressSub: {
     fontSize: 12,
-    color: '#78909C',
     marginTop: 2,
     marginBottom: 10,
   },
   lvlProgressBarTrack: {
     height: 6,
-    backgroundColor: '#ECEFF1',
     borderRadius: 3,
     overflow: 'hidden',
   },

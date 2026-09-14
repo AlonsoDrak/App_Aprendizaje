@@ -23,6 +23,7 @@ export type TopicStatus =
 
 export type VisualModelType = 
   | 'BALANCE'
+  | 'BALANCE_EQUATION'
   | 'SLOPE'
   | 'PARABOLA'
   | 'EXPONENTIAL'
@@ -73,6 +74,7 @@ export interface TopicNode {
     realWorldScenario: string;
     whyItMatters: string;
     text: string;
+    quickSummary?: string; // Resumen ultra-sintético para micro-sesiones de 15 min
     readingMinutes: number;
     keyTakeaways: string[];
   };

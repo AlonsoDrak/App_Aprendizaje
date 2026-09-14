@@ -2,51 +2,73 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ComputedTopicNode } from '../../services/dag-engine';
 import { EDUCATIONAL_LEVELS } from '../../data/curriculum/levels';
+import { useAppTheme } from '../../context/ThemeContext';
+import { StudySessionIntent } from '../../types/curriculum';
 
 interface TopicNodeCardProps {
   computed: ComputedTopicNode;
+  userIntent?: StudySessionIntent;
   onPress: () => void;
 }
 
-export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, onPress }) => {
+export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, userIntent, onPress }) => {
   const { topic, computedStatus, missingPrerequisites } = computed;
   const level = EDUCATIONAL_LEVELS[topic.levelId];
+  const { colors, isDark } = useAppTheme();
 
   const getStatusBadge = () => {
     switch (computedStatus) {
       case 'VALIDATED':
-        return { text: '✓ Validado', bg: '#E8F5E9', color: '#2E7D32' };
+        return { text: '✓ Validado', bg: colors.successLight, color: colors.success };
       case 'NEEDS_CONSOLIDATION':
-        return { text: '🔄 Consolidar', bg: '#FFF8E1', color: '#F57C00' };
+        return { text: '🔄 Consolidar', bg: colors.warningLight, color: colors.warning };
       case 'IN_PROGRESS':
-        return { text: '⏳ En Estudio', bg: '#E3F2FD', color: '#1565C0' };
+        return { text: '⏳ En Estudio', bg: colors.accentLight, color: colors.accent };
       case 'AVAILABLE':
-        return { text: '🚀 Listo para Estudiar', bg: '#E1F5FE', color: '#0288D1' };
+        return { text: '🚀 Disponible', bg: colors.accentLight, color: colors.accent };
       case 'LOCKED':
-        return { text: '🔒 Bloqueado', bg: '#ECEFF1', color: '#78909C' };
+        return { text: '🔒 Bloqueado', bg: colors.surfaceSubtle, color: colors.textMuted };
     }
   };
 
   const badge = getStatusBadge();
   const isLocked = computedStatus === 'LOCKED';
 
+  // Utilidad para la intención de estudio
+  const isQuickMatch = userIntent === 'QUICK_15' && topic.estimatedMinutes <= 20;
+  const isDeepMatch = userIntent === 'DEEP_PRACTICE_45' && (computedStatus === 'NEEDS_CONSOLIDATION' || topic.estimatedMinutes >= 25);
+
   return (
     <TouchableOpacity
       style={[
         styles.card,
-        isLocked && styles.cardLocked,
-        computedStatus === 'VALIDATED' && styles.cardValidated,
+        { backgroundColor: colors.card, borderColor: colors.cardBorder },
+        isLocked && { opacity: 0.7, backgroundColor: colors.surfaceSubtle },
+        computedStatus === 'VALIDATED' && { borderLeftWidth: 4, borderLeftColor: colors.success },
+        computedStatus === 'AVAILABLE' && { borderLeftWidth: 4, borderLeftColor: colors.accent },
       ]}
       onPress={onPress}
       disabled={isLocked}
       activeOpacity={0.7}
+      // @ts-ignore
+      cursor={isLocked ? 'default' : 'pointer'}
     >
       <View style={styles.cardHeader}>
         <View style={styles.codeRow}>
-          <Text style={[styles.codeBadge, { backgroundColor: level.color + '20', color: level.color }]}>
+          <Text style={[styles.codeBadge, { backgroundColor: level.color + '25', color: level.color }]}>
             {topic.code}
           </Text>
-          <Text style={styles.levelBadge}>{level.badge}</Text>
+          <Text style={[styles.levelBadge, { color: colors.textMuted }]}>{level.badge}</Text>
+          {isQuickMatch && !isLocked && (
+            <View style={[styles.intentTag, { backgroundColor: colors.accentLight }]}>
+              <Text style={[styles.intentTagText, { color: colors.accent }]}>⚡ 15 min</Text>
+            </View>
+          )}
+          {isDeepMatch && !isLocked && (
+            <View style={[styles.intentTag, { backgroundColor: colors.warningLight }]}>
+              <Text style={[styles.intentTagText, { color: colors.warning }]}>🔬 Práctica</Text>
+            </View>
+          )}
         </View>
 
         <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
@@ -54,27 +76,31 @@ export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, onPress 
         </View>
       </View>
 
-      <Text style={[styles.title, isLocked && styles.textLocked]}>{topic.title}</Text>
-      <Text style={styles.subtitle} numberOfLines={2}>
+      <Text style={[styles.title, { color: isLocked ? colors.textMuted : colors.textPrimary }]}>
+        {topic.title}
+      </Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={2}>
         {topic.subtitle}
       </Text>
 
-      {/* Si está bloqueado, mostrar los prerrequisitos faltantes */}
+      {/* Prerrequisitos faltantes si está bloqueado */}
       {isLocked && missingPrerequisites.length > 0 && (
-        <View style={styles.prereqBox}>
-          <Text style={styles.prereqLabel}>Prerrequisitos pendientes para desbloquear:</Text>
+        <View style={[styles.prereqBox, { backgroundColor: colors.surfaceSubtle }]}>
+          <Text style={[styles.prereqLabel, { color: colors.textMuted }]}>
+            Prerrequisitos pendientes para desbloquear:
+          </Text>
           {missingPrerequisites.map((p) => (
-            <Text key={p.id} style={styles.prereqItem}>
+            <Text key={p.id} style={[styles.prereqItem, { color: colors.textSecondary }]}>
               • {p.code} {p.title}
             </Text>
           ))}
         </View>
       )}
 
-      <View style={styles.cardFooter}>
-        <Text style={styles.timeEstimate}>⏱️ ~{topic.estimatedMinutes} min</Text>
-        <Text style={styles.openHint}>
-          {isLocked ? 'Completa los fundamentos previos' : 'Toca para iniciar sesión →'}
+      <View style={[styles.cardFooter, { borderTopColor: colors.cardBorder }]}>
+        <Text style={[styles.timeEstimate, { color: colors.textMuted }]}>⏱️ ~{topic.estimatedMinutes} min</Text>
+        <Text style={[styles.openHint, { color: isLocked ? colors.textMuted : colors.accent }]}>
+          {isLocked ? 'Requiere fundamentos previos' : 'Iniciar estudio guiado →'}
         </Text>
       </View>
     </TouchableOpacity>
@@ -83,26 +109,15 @@ export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, onPress 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
-  },
-  cardLocked: {
-    backgroundColor: '#FAFAFA',
-    borderColor: '#EEEEEE',
-    opacity: 0.85,
-  },
-  cardValidated: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#388E3C',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -124,8 +139,16 @@ const styles = StyleSheet.create({
   },
   levelBadge: {
     fontSize: 11,
-    color: '#78909C',
     fontWeight: '600',
+  },
+  intentTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  intentTagText: {
+    fontSize: 10,
+    fontWeight: '800',
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -139,20 +162,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A237E',
     marginBottom: 4,
-  },
-  textLocked: {
-    color: '#78909C',
   },
   subtitle: {
     fontSize: 13,
-    color: '#546E7A',
     lineHeight: 18,
     marginBottom: 10,
   },
   prereqBox: {
-    backgroundColor: '#ECEFF1',
     padding: 10,
     borderRadius: 8,
     marginBottom: 10,
@@ -160,12 +177,10 @@ const styles = StyleSheet.create({
   prereqLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#455A64',
     marginBottom: 4,
   },
   prereqItem: {
     fontSize: 11,
-    color: '#37474F',
     lineHeight: 16,
   },
   cardFooter: {
@@ -173,18 +188,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
     paddingTop: 8,
     marginTop: 4,
   },
   timeEstimate: {
     fontSize: 12,
-    color: '#78909C',
     fontWeight: '600',
   },
   openHint: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#0288D1',
+    fontWeight: '700',
   },
 });

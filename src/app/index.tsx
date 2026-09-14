@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { TopicNode, LevelId, UserProgressData, StudySessionIntent } from '../types/curriculum';
 import { ALL_MATH_TOPICS } from '../data/curriculum/math';
@@ -22,8 +23,10 @@ import { loadUserProgress, setStudyIntent } from '../services/storage';
 import { TopicNodeCard } from '../components/dag/TopicNodeCard';
 import { StudySessionFlow } from '../components/study/StudySessionFlow';
 import { TimeIntentModal } from '../components/study/TimeIntentModal';
+import { useAppTheme } from '../context/ThemeContext';
 
 export default function HomeScreen() {
+  const { colors, isDark, toggleTheme } = useAppTheme();
   const [progress, setProgress] = useState<UserProgressData | null>(null);
   const [computedNodes, setComputedNodes] = useState<Record<string, ComputedTopicNode>>({});
   const [stats, setStats] = useState<MasteryStats | null>(null);
@@ -57,21 +60,30 @@ export default function HomeScreen() {
 
   if (!progress || !stats) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0288D1" />
-        <Text style={styles.loadingText}>Cargando mapa de conocimientos...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Cargando red de prerrequisitos (DAG)...
+        </Text>
       </View>
     );
   }
 
-  // Si hay una sesión de estudio activa, mostramos el orquestador de 4 fases
+  // Si hay una sesión de estudio activa, renderizamos el flujo pedagógico de 4 fases
   if (activeTopic) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <StudySessionFlow
           topic={activeTopic}
           userIntent={progress.selectedIntent}
-          onBack={() => setActiveTopic(null)}
+          onBack={() => {
+            setActiveTopic(null);
+            fetchProgress();
+          }}
+          onSelectNextTopic={(next) => {
+            setActiveTopic(next);
+            fetchProgress();
+          }}
           onFinish={async () => {
             setActiveTopic(null);
             await fetchProgress();
@@ -90,83 +102,136 @@ export default function HomeScreen() {
   const getIntentTitle = () => {
     switch (progress.selectedIntent) {
       case 'QUICK_15':
-        return '⚡ Micro-Sesión (15 min)';
+        return '⚡ Micro-Sesión Ágil (15 min)';
       case 'STANDARD_30':
         return '🎯 Sesión Estándar (30 min)';
       case 'DEEP_PRACTICE_45':
-        return '🔬 Práctica Profunda (45+ min)';
+        return '🔬 Práctica Deliberada (45+ min)';
       case 'REFERENCE_LIBRARY':
-        return '📚 Modo Biblioteca';
+        return '📚 Modo Consulta Técnica';
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollInner}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
-        {/* Cabecera Principal */}
+        {/* Cabecera Principal con Toggle de Modo Oscuro */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.appTitle}>App Aprendizaje</Text>
-            <Text style={styles.subjectTitle}>Matemáticas: De Secundaria a Universidad</Text>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.appTitle, { color: colors.textPrimary }]}>App Aprendizaje</Text>
+            <Text style={[styles.subjectTitle, { color: colors.textSecondary }]}>
+              Matemáticas • Secundaria a Universidad
+            </Text>
           </View>
-          <View style={styles.badgeAutonomy}>
-            <Text style={styles.badgeAutonomyText}>Sin Rachas • Mastery Learning</Text>
+
+          <View style={styles.headerRight}>
+            {/* Botón de Modo Oscuro */}
+            <TouchableOpacity
+              style={[styles.themeToggleBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.cardBorder }]}
+              onPress={toggleTheme}
+              activeOpacity={0.7}
+              accessibilityLabel="Cambiar tema claro/oscuro"
+            >
+              <Text style={styles.themeToggleIcon}>{isDark ? '☀️ Claro' : '🌙 Oscuro'}</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.badgeAutonomy, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
+              <Text style={[styles.badgeAutonomyText, { color: colors.success }]}>Mastery Learning</Text>
+            </View>
           </View>
         </View>
 
-        {/* Barra de Intención de Tiempo */}
+        {/* Barra de Intención de Tiempo con Utilidad Real */}
         <TouchableOpacity
-          style={styles.intentBanner}
+          style={[styles.intentBanner, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
           onPress={() => setShowIntentModal(true)}
           activeOpacity={0.8}
         >
           <View style={styles.intentLeft}>
-            <Text style={styles.intentLabel}>Intención de estudio actual:</Text>
-            <Text style={styles.intentValue}>{getIntentTitle()}</Text>
+            <Text style={[styles.intentLabel, { color: colors.textMuted }]}>
+              Intención de estudio activa:
+            </Text>
+            <Text style={[styles.intentValue, { color: colors.accent }]}>
+              {getIntentTitle()}
+            </Text>
+            <Text style={[styles.intentHint, { color: colors.textSecondary }]}>
+              {progress.selectedIntent === 'QUICK_15'
+                ? '⚡ Adaptando lecciones: lecturas esenciales y retos ágiles.'
+                : progress.selectedIntent === 'DEEP_PRACTICE_45'
+                ? '🔬 Modo intensivo: exigiendo batería completa y análisis de errores.'
+                : '🎯 Sesión balanceada de 4 fases.'}
+            </Text>
           </View>
-          <View style={styles.intentChangeBtn}>
-            <Text style={styles.intentChangeText}>Cambiar ⚙️</Text>
+          <View style={[styles.intentChangeBtn, { backgroundColor: colors.accentLight }]}>
+            <Text style={[styles.intentChangeText, { color: colors.accent }]}>Ajustar ⏱️</Text>
           </View>
         </TouchableOpacity>
 
         {/* Panel de Métricas de Competencia */}
-        <View style={styles.statsCard}>
+        <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.validatedCount} / {stats.totalTopics}</Text>
-              <Text style={styles.statLabel}>Temas Validados</Text>
+              <Text style={[styles.statNumber, { color: colors.textPrimary }]}>
+                {stats.validatedCount} / {stats.totalTopics}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Temas Validados</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{stats.percentageValidated}%</Text>
-              <Text style={styles.statLabel}>Dominio Global</Text>
+            <View style={[styles.statDivider, { backgroundColor: colors.cardBorder }]}>
+              <Text />
             </View>
-            <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{progress.totalFocusedMinutes} min</Text>
-              <Text style={styles.statLabel}>Foco Dedicado</Text>
+              <Text style={[styles.statNumber, { color: colors.textPrimary }]}>
+                {stats.percentageValidated}%
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Dominio Global</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.cardBorder }]}>
+              <Text />
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: colors.textPrimary }]}>
+                {progress.totalFocusedMinutes} min
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Tiempo con Foco</Text>
             </View>
           </View>
 
-          {/* Barra visual de progreso */}
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: `${stats.percentageValidated}%` }]} />
+          {/* Barra de progreso de dominio */}
+          <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${stats.percentageValidated}%`, backgroundColor: colors.success },
+              ]}
+            />
           </View>
         </View>
 
-        {/* Selector de Nivel Educativo (Secundaria -> Preparatoria -> Universidad) */}
+        {/* Selector de Nivel Educativo */}
         <View style={styles.levelSelectorContainer}>
-          <Text style={styles.sectionTitle}>Ruta de Aprendizaje por Niveles:</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Grafo de Aprendizaje por Niveles:
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.levelTabsScroll}>
             <TouchableOpacity
-              style={[styles.levelTab, selectedLevel === 'ALL' && styles.levelTabActive]}
+              style={[
+                styles.levelTab,
+                { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                selectedLevel === 'ALL' && { backgroundColor: colors.accent, borderColor: colors.accent },
+              ]}
               onPress={() => setSelectedLevel('ALL')}
             >
-              <Text style={[styles.levelTabText, selectedLevel === 'ALL' && styles.levelTabTextActive]}>
+              <Text
+                style={[
+                  styles.levelTabText,
+                  { color: colors.textSecondary },
+                  selectedLevel === 'ALL' && { color: '#FFFFFF', fontWeight: '700' },
+                ]}
+              >
                 Todos ({stats.totalTopics})
               </Text>
             </TouchableOpacity>
@@ -180,6 +245,7 @@ export default function HomeScreen() {
                   key={lvl.id}
                   style={[
                     styles.levelTab,
+                    { backgroundColor: colors.card, borderColor: colors.cardBorder },
                     isSelected && { backgroundColor: lvl.color, borderColor: lvl.color },
                   ]}
                   onPress={() => setSelectedLevel(lvl.id)}
@@ -187,7 +253,8 @@ export default function HomeScreen() {
                   <Text
                     style={[
                       styles.levelTabText,
-                      isSelected && styles.levelTabTextActive,
+                      { color: colors.textSecondary },
+                      isSelected && { color: '#FFFFFF', fontWeight: '700' },
                     ]}
                   >
                     {lvl.name} ({lvlStats.validated}/{lvlStats.total})
@@ -200,11 +267,20 @@ export default function HomeScreen() {
 
         {/* Descripción del nivel seleccionado si no es ALL */}
         {selectedLevel !== 'ALL' && (
-          <View style={[styles.levelInfoBox, { borderLeftColor: EDUCATIONAL_LEVELS[selectedLevel].color }]}>
+          <View
+            style={[
+              styles.levelInfoBox,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+                borderLeftColor: EDUCATIONAL_LEVELS[selectedLevel].color,
+              },
+            ]}
+          >
             <Text style={[styles.levelInfoTitle, { color: EDUCATIONAL_LEVELS[selectedLevel].color }]}>
               {EDUCATIONAL_LEVELS[selectedLevel].categoryName}
             </Text>
-            <Text style={styles.levelInfoDesc}>
+            <Text style={[styles.levelInfoDesc, { color: colors.textSecondary }]}>
               {EDUCATIONAL_LEVELS[selectedLevel].description}
             </Text>
           </View>
@@ -213,11 +289,11 @@ export default function HomeScreen() {
         {/* Lista de Nodos del Grafo Acíclico Dirigido (DAG) */}
         <View style={styles.nodesSection}>
           <View style={styles.nodesHeader}>
-            <Text style={styles.nodesCountText}>
-              Mostrando {filteredTopics.length} temas {selectedLevel !== 'ALL' ? 'en este nivel' : 'en la red'}
+            <Text style={[styles.nodesCountText, { color: colors.textPrimary }]}>
+              Mostrando {filteredTopics.length} temas en la red
             </Text>
-            <Text style={styles.nodesHelpText}>
-              Validar temas desbloquea automáticamente los conceptos avanzados derivados
+            <Text style={[styles.nodesHelpText, { color: colors.textMuted }]}>
+              El sistema no permite saltar a temas derivados sin validar antes los fundamentos
             </Text>
           </View>
 
@@ -228,6 +304,7 @@ export default function HomeScreen() {
               <TopicNodeCard
                 key={topic.id}
                 computed={computed}
+                userIntent={progress.selectedIntent}
                 onPress={() => setActiveTopic(topic)}
               />
             );
@@ -249,18 +326,15 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F7FA',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#546E7A',
     fontWeight: '600',
   },
   container: {
@@ -276,72 +350,83 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 14,
   },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
   appTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#1A237E',
   },
   subjectTitle: {
     fontSize: 13,
-    color: '#546E7A',
     marginTop: 2,
   },
-  badgeAutonomy: {
-    backgroundColor: '#E8F5E9',
+  themeToggleBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+  },
+  themeToggleIcon: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  badgeAutonomy: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   badgeAutonomyText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#2E7D32',
+    fontWeight: '800',
   },
   intentBanner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 12,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   intentLeft: {
     flex: 1,
   },
   intentLabel: {
     fontSize: 11,
-    color: '#78909C',
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   intentValue: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#0288D1',
+    fontWeight: '800',
     marginTop: 2,
   },
+  intentHint: {
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 15,
+  },
   intentChangeBtn: {
-    backgroundColor: '#E1F5FE',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
+    marginLeft: 8,
   },
   intentChangeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0288D1',
   },
   statsCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 18,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   statsRow: {
     flexDirection: 'row',
@@ -356,28 +441,23 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1A237E',
   },
   statLabel: {
     fontSize: 11,
-    color: '#78909C',
     marginTop: 2,
     fontWeight: '600',
   },
   statDivider: {
     width: 1,
     height: 28,
-    backgroundColor: '#ECEFF1',
   },
   progressBarTrack: {
     height: 6,
-    backgroundColor: '#ECEFF1',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#2E7D32',
     borderRadius: 3,
   },
   levelSelectorContainer: {
@@ -386,7 +466,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#263238',
     marginBottom: 8,
   },
   levelTabsScroll: {
@@ -396,32 +475,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#CFD8DC',
     marginRight: 8,
-  },
-  levelTabActive: {
-    backgroundColor: '#1A237E',
-    borderColor: '#1A237E',
   },
   levelTabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#455A64',
-  },
-  levelTabTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
   },
   levelInfoBox: {
-    backgroundColor: '#FFFFFF',
     padding: 12,
     borderRadius: 8,
     borderLeftWidth: 4,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
   },
   levelInfoTitle: {
     fontSize: 13,
@@ -430,7 +496,6 @@ const styles = StyleSheet.create({
   },
   levelInfoDesc: {
     fontSize: 12,
-    color: '#546E7A',
     lineHeight: 16,
   },
   nodesSection: {
@@ -442,11 +507,9 @@ const styles = StyleSheet.create({
   nodesCountText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#37474F',
   },
   nodesHelpText: {
     fontSize: 11,
-    color: '#78909C',
     marginTop: 2,
   },
 });

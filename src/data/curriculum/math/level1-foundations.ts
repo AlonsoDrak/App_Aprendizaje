@@ -2,6 +2,105 @@ import { TopicNode } from '../../../types/curriculum';
 
 export const LEVEL_1_TOPICS: TopicNode[] = [
   {
+    id: 'math-1-arithmetic-signs',
+    levelId: 'SECUNDARIA',
+    subjectId: 'math',
+    code: 'MAT-1.0',
+    title: 'Jerarquía de Operaciones y Números con Signo',
+    subtitle: 'El orden matemático universal y por qué menos por menos da más',
+    estimatedMinutes: 20,
+    prerequisites: [],
+    context: {
+      realWorldScenario: 'Errores millonarios en software contable y programación científica',
+      whyItMatters: 'En redes sociales circula con frecuencia el debate: "¿Cuánto es 8 ÷ 2(2 + 2)? ¿16 o 1?". Si los ingenieros o contadores no siguieran una jerarquía estricta, los cálculos de resistencia estructural o transferencias bancarias arrojarían resultados contradictorios según quién los lea.',
+      readingMinutes: 5,
+      quickSummary: 'La jerarquía PEMDAS (Paréntesis, Exponentes, Multiplicación/División, Suma/Resta) no es una sugerencia: es el convenio lógico universal. Un número negativo representa una deuda o una dirección opuesta; restar una deuda (- -) equivale financieramente a recibir dinero (+).',
+      text: 'La aritmética no es un conjunto de reglas arbitrarias creadas para memorizar, sino un lenguaje de precisión lógica absoluta.\n\n1. La Jerarquía de Operaciones (PEMDAS / BODMAS):\nCuando varias operaciones conviven en una expresión, se resuelven en este orden inalterable:\n- Primero: Lo encerrado entre Paréntesis y signos de agrupación.\n- Segundo: Exponentes y raíces cuadradas.\n- Tercero: Multiplicaciones y Divisiones (evaluadas de izquierda a derecha en el mismo nivel).\n- Cuarto: Sumas y Restas (evaluadas de izquierda a derecha).\n\n2. ¿Por qué "menos por menos da más"?\nImagina que tienes una cuenta bancaria. Un saldo de -$50 significa que debes $50. Si el banco decide ELIMINAR (restar) esa deuda de $50, tu balance experimenta: -(-50) = +50. ¡Tu patrimonio aumentó en $50! Físicamente, avanzar hacia atrás (velocidad negativa) en reversa (tiempo negativo) significa que en el pasado estabas más adelante.',
+      keyTakeaways: [
+        'Multiplicación y división comparten la misma prioridad: se resuelven estrictamente de izquierda a derecha.',
+        'Un signo negativo frente a un paréntesis invierte el signo de TODOS los términos interiores.',
+        'Restar un número negativo equivale conceptualmente a anular una deuda, sumando valor positivo.',
+      ],
+    },
+    visualModel: {
+      type: 'SLOPE',
+      title: 'La Recta Numérica y Operaciones con Signo',
+      instructions: 'Observa cómo desplazarte en sentido negativo invierte la orientación y cómo multiplicar por -1 refleja el punto como un espejo sobre el origen cero.',
+      insightGoal: 'Comprender que el signo menos es una orden geométrica de giro de 180° sobre el eje numérico.',
+      initialParams: { m: -1, b: 0 },
+    },
+    practice: {
+      step1Guided: {
+        problemPrompt: 'Evaluar la expresión contable: 20 - 3 × (2 + 4) + 12 ÷ 4.',
+        workingLines: [
+          'Paso 1: Resolver el paréntesis interior -> (2 + 4) = 6.',
+          'Paso 2: La expresión queda: 20 - 3 × 6 + 12 ÷ 4.',
+          'Paso 3: Resolver multiplicaciones y divisiones antes que las sumas -> 3 × 6 = 18;  12 ÷ 4 = 3.',
+          'Paso 4: La expresión simplificada es: 20 - 18 + 3.',
+        ],
+        challengeStep: '¿Cuál es el valor final evaluado de izquierda a derecha?',
+        options: [
+          '5 (20 - 18 = 2; luego 2 + 3 = 5).',
+          '-1 (restando 20 de 21).',
+          '17.',
+        ],
+        correctOptionIndex: 0,
+        stepExplanation: '20 - 18 = 2; luego 2 + 3 = 5. Realizar la resta 20 - 3 antes de multiplicar hubiera violado la jerarquía.',
+      },
+      step2Autonomous: {
+        problemPrompt: 'Problema Autónomo: Un laboratorio registra una temperatura de -8 °C a medianoche. Durante la madrugada desciende 5 °C más y al mediodía sube 17 °C. ¿Cuál es la temperatura final?',
+        scenario: 'Modela: -8 - 5 + 17.',
+        options: [
+          '+4 °C (-8 - 5 = -13; luego -13 + 17 = +4 °C).',
+          '+14 °C.',
+          '-4 °C.',
+        ],
+        correctOptionIndex: 0,
+        stepExplanation: '-8 - 5 = -13 °C; sumando los 17 °C de subida queda -13 + 17 = +4 °C.',
+      },
+      step3ErrorAnalysis: {
+        scenario: 'Un programador evalúa la fórmula de cálculo de impuestos: Total = 100 - 20 / 2 + 5.',
+        allegedSolution: [
+          'Expresión: 100 - 20 / 2 + 5',
+          'Línea 1 (Error del programador): Resta primero -> 100 - 20 = 80',
+          'Línea 2: Divide entre 2 -> 80 / 2 = 40',
+          'Línea 3: Suma 5 -> 40 + 5 = 45',
+        ],
+        flawedLineIndex: 1,
+        question: '¿Qué regla de precedencia violó el programador?',
+        options: [
+          'Efectuó la resta antes que la división; la división 20 / 2 = 10 tiene mayor prioridad, dando 100 - 10 + 5 = 95.',
+          'Debió sumar 2 + 5 primero.',
+          'Las divisiones solo se calculan al final.',
+        ],
+        correctOptionIndex: 0,
+        fallacyExplanation: 'La división tiene prioridad sobre la resta. El resultado correcto es 100 - 10 + 5 = 95, no 45.',
+      },
+    },
+    activeRecall: {
+      feynmanPrompt: 'Explícale a un niño de 10 años por qué multiplicar dos números negativos da un resultado positivo, usando un ejemplo cotidiano (como una película reproducida en reversa o la cancelación de una multa).',
+      reflectionGuide: [
+        '¿Usaste la metáfora de anular algo negativo?',
+        '¿Explicaste qué representa el signo menos en el mundo físico?',
+      ],
+      rubricChecklist: [
+        'Transmite con claridad la noción de inversión de dirección.',
+        'Explica por qué menos por menos no es un capricho memorístico sino una consecuencia lógica de balance.',
+      ],
+    },
+    referenceCard: {
+      keyFormula: 'PEMDAS: Paréntesis → Exponentes → Multiplicación/División → Suma/Resta',
+      coreConcept: 'La jerarquía garantiza consistencia universal. Los signos negativos operan como inversiones geométricas y financieras de estado.',
+      whenToUse: 'En cualquier evaluación de fórmulas financieras, hojas de cálculo de Excel y líneas de código de programación.',
+      quickRules: [
+        '(-a) · (-b) = +(a · b)',
+        '(-a) · (+b) = -(a · b)',
+        'Al evaluar operaciones del mismo nivel (ej. suma y resta), ve estrictamente de izquierda a derecha.',
+      ],
+    },
+  },
+
+  {
     id: 'math-1-proportions',
     levelId: 'SECUNDARIA',
     subjectId: 'math',
@@ -9,12 +108,13 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
     title: 'Razonamiento Proporcional en el Mundo Real',
     subtitle: 'Costos unitarios, diluciones y relaciones causa-efecto',
     estimatedMinutes: 20,
-    prerequisites: [],
+    prerequisites: ['math-1-arithmetic-signs'],
     context: {
       realWorldScenario: 'Comparación inteligente de compras y mezclas de ingeniería',
-      whyItMatters: 'En la vida diaria nos engañan con empaques más grandes que en realidad cuestan más por gramo. En la industria química, alterar la proporción de un reactivo destruye el producto.',
+      whyItMatters: 'En el supermercado nos engañan con empaques más grandes que en realidad cuestan más por gramo. En la industria química, alterar la proporción de un reactivo destruye el producto.',
       readingMinutes: 4,
-      text: 'Una proporción no es una fórmula mágica de "regla de tres": es una afirmación de equivalencia entre dos tasas de cambio. Si 3 litros de pintura cubren 18 metros cuadrados de pared, la tasa intrínseca es de 6 m² por cada litro.\n\nCuando dos magnitudes son directamente proporcionales, su cociente permanece constante (y/x = k). Si duplicas una, la otra se duplica. En cambio, en una proporción inversa (como la velocidad y el tiempo necesario para recorrer 100 km), su producto es constante: a mayor velocidad, menor tiempo requerido.',
+      quickSummary: 'Una proporción directa mantiene constante el cociente (y/x = k); duplicar la causa duplica el efecto. Una inversa mantiene constante el producto (x · y = k).',
+      text: 'Una proporción no es una regla mecánica de multiplicar cruzado: es una afirmación de equivalencia entre dos tasas de cambio del mundo real.\n\n1. Proporcionalidad Directa:\nOcurre cuando el cociente entre dos variables permanece constante: y / x = k. Si compras 3 litros de gasolina por $60, la tasa es k = $20 por litro. Si compras el doble de litros, pagarás el doble de dinero.\n\n2. Proporcionalidad Inversa:\nOcurre cuando el producto de dos variables es constante: x · y = k. Por ejemplo, la relación entre la velocidad de un transporte y el tiempo necesario para recorrer 120 km. A 60 km/h tardas 2 horas (60 × 2 = 120). Si duplicas tu velocidad a 120 km/h, el tiempo se divide a la mitad: 1 hora (120 × 1 = 120).',
       keyTakeaways: [
         'Una proporción directa mantiene constante el cociente (y/x = k).',
         'Una proporción inversa mantiene constante el producto (x · y = k).',
@@ -24,8 +124,8 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
     visualModel: {
       type: 'BALANCE',
       title: 'Balanza de Equivalencia Proporcional',
-      instructions: 'Ajusta los bloques en el platillo izquierdo y observa cuántas unidades unitarias requiere el platillo derecho para mantener el equilibrio.',
-      insightGoal: 'Descubrir visualmente la constante de proporcionalidad k como el peso de un bloque individual.',
+      instructions: 'Ajusta los bloques en el platillo izquierdo y observa cómo el platillo derecho equilibra el peso manteniendo constante la tasa k = 6 kg por caja.',
+      insightGoal: 'Descubrir visualmente la constante de proporcionalidad k como el peso inalterable de una sola unidad.',
       initialParams: { leftBlocks: 3, unitWeight: 6 },
     },
     practice: {
@@ -48,11 +148,11 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
         problemPrompt: 'Problema Autónomo: Un equipo de 4 albañiles tarda 18 horas en levantar un muro perimetral. Si se contratan 2 albañiles adicionales con el mismo rendimiento (total 6 albañiles), ¿cuántas horas tardarán?',
         scenario: 'Atención: Analiza si se trata de una proporción directa o inversa antes de calcular.',
         options: [
-          '27 horas (a más albañiles más tiempo).',
           '12 horas (proporción inversa: 4 albañiles × 18 h = 72 h-hombre totales; 72 ÷ 6 = 12 h).',
-          '14 horas (restando 4 horas por los 2 albañiles nuevos).',
+          '27 horas (a más albañiles más tiempo).',
+          '14 horas.',
         ],
-        correctOptionIndex: 1,
+        correctOptionIndex: 0,
         stepExplanation: 'Es una proporción inversa: el trabajo total es de 72 horas-hombre. Al repartirlo entre 6 personas, tardan 72 / 6 = 12 horas.',
       },
       step3ErrorAnalysis: {
@@ -112,6 +212,7 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
       realWorldScenario: 'Despejar costos ocultos en contratos y facturación',
       whyItMatters: 'El mayor obstáculo en matemáticas es creer que una letra es algo misterioso. En realidad, una variable "x" es simplemente una caja cuyo contenido aún no has abierto, pero cuyas reglas de peso ya conoces.',
       readingMinutes: 5,
+      quickSummary: 'Una ecuación es una balanza de dos platillos. El signo "=" significa equilibrio. Despejar consiste en aplicar operaciones inversas idénticas en ambos lados simultáneamente.',
       text: 'Una ecuación es como una balanza antigua de dos platillos perfectamente equilibrada. El signo de igual (=) no significa "aquí va el resultado", sino "lo que está a la izquierda pesa exactamente lo mismo que lo que está a la derecha".\n\nPor eso, para descubrir qué hay dentro de la caja "x", solo hay una regla dorada: cualquier operación que apliques en el platillo izquierdo (sumar, restar, multiplicar o dividir), debes aplicarla exactamente igual en el derecho. Despejar no es "pasar cosas al otro lado cambiando de signo", es neutralizar pesos en ambos lados a la vez.',
       keyTakeaways: [
         'El signo "=" representa balance absoluto, no una orden de cálculo.',
@@ -120,10 +221,10 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
       ],
     },
     visualModel: {
-      type: 'BALANCE',
+      type: 'BALANCE_EQUATION',
       title: 'Simulador de Balanza Algebraica (2x + 4 = 10)',
-      instructions: 'Retira 4 unidades de ambos lados y luego divide ambos platillos entre 2 para aislar el valor de la caja x.',
-      insightGoal: 'Ver cómo el equilibrio se mantiene intacto solo si la misma operación se ejecuta en ambos platillos.',
+      instructions: 'Interactúa con los botones para ver cómo restar 4 unidades en ambos platillos y luego dividir entre 2 aísla el valor de la incógnita x sin romper el equilibrio.',
+      insightGoal: 'Descubrir visualmente que despejar una ecuación es desarmar capas con operaciones opuestas idénticas en ambos lados.',
       initialParams: { coefficient: 2, constant: 4, total: 10 },
     },
     practice: {
@@ -207,6 +308,7 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
       realWorldScenario: 'Sistemas de mapas satelitales y trazado de rutas óptimas',
       whyItMatters: 'Cada píxel de tu pantalla, cada satélite GPS y cada robot aspirador navega usando un plano bidimensional con un punto de origen (0,0). Comprenderlo conecta el álgebra con la geometría física.',
       readingMinutes: 4,
+      quickSummary: 'El plano cartesiano fija direcciones inequívocas con (x, y). La distancia recta entre dos puntos es la hipotenusa de un triángulo rectángulo: d = √(Δx² + Δy²).',
       text: 'René Descartes unió dos mundos que estaban separados: las ecuaciones algebraicas y los dibujos geométricos. En el plano cartesiano, un punto P(x, y) es una dirección inequívoca: cuántos pasos dar en horizontal (eje X) y cuántos en vertical (eje Y).\n\nPara calcular la distancia en línea recta entre dos puntos cualesquiera, no hace falta una regla especial: formamos un triángulo rectángulo y aplicamos el Teorema de Pitágoras (d² = Δx² + Δy²). La distancia en línea recta es siempre la hipotenusa de ese triángulo.',
       keyTakeaways: [
         'El eje X representa la dimensión horizontal; el eje Y la vertical.',
@@ -303,6 +405,7 @@ export const LEVEL_1_TOPICS: TopicNode[] = [
       realWorldScenario: 'Análisis de viabilidad financiera y selección de proveedores',
       whyItMatters: 'Un proveedor cobra $500 de tarifa fija más $2 por unidad; otro cobra $100 fijo pero $4 por unidad. ¿Cuál te conviene contratar? La respuesta depende de exactamente cuántas unidades compres. El cruce es el punto de equilibrio.',
       readingMinutes: 5,
+      quickSummary: 'Resolver un sistema 2x2 es hallar el punto exacto de cruce (x, y) de dos rectas donde ambas restricciones son satisfechas simultáneamente.',
       text: 'Un sistema de dos ecuaciones con dos incógnitas describe dos rectas dibujadas sobre el mismo plano. Cada recta representa todas las combinaciones que hacen cierta una de las condiciones.\n\nResolver el sistema significa encontrar las coordenadas (x, y) donde ambas rectas se cortan. En ese punto único de intersección, ambas ecuaciones quedan satisfechas simultáneamente. Geométricamente es un cruce de caminos; económicamente es el umbral de rentabilidad.',
       keyTakeaways: [
         'Cada ecuación lineal de dos variables representa una recta continua en el plano.',
