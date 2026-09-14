@@ -1,20 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { ComputedTopicNode } from '../../services/dag-engine';
 import { EDUCATIONAL_LEVELS } from '../../data/curriculum/levels';
 import { useAppTheme } from '../../context/ThemeContext';
-import { StudySessionIntent } from '../../types/curriculum';
 
 interface TopicNodeCardProps {
   computed: ComputedTopicNode;
-  userIntent?: StudySessionIntent;
   onPress: () => void;
 }
 
-export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, userIntent, onPress }) => {
+export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, onPress }) => {
   const { topic, computedStatus, missingPrerequisites } = computed;
   const level = EDUCATIONAL_LEVELS[topic.levelId];
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
 
   const getStatusBadge = () => {
     switch (computedStatus) {
@@ -34,24 +32,22 @@ export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, userInte
   const badge = getStatusBadge();
   const isLocked = computedStatus === 'LOCKED';
 
-  // Utilidad para la intención de estudio
-  const isQuickMatch = userIntent === 'QUICK_15' && topic.estimatedMinutes <= 20;
-  const isDeepMatch = userIntent === 'DEEP_PRACTICE_45' && (computedStatus === 'NEEDS_CONSOLIDATION' || topic.estimatedMinutes >= 25);
-
   return (
-    <TouchableOpacity
-      style={[
+    <Pressable
+      style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.card, borderColor: colors.cardBorder },
-        isLocked && { opacity: 0.7, backgroundColor: colors.surfaceSubtle },
+        {
+          backgroundColor: isLocked ? colors.surfaceSubtle : colors.card,
+          borderColor: colors.cardBorder,
+          opacity: isLocked ? 0.75 : pressed ? 0.9 : 1,
+        },
         computedStatus === 'VALIDATED' && { borderLeftWidth: 4, borderLeftColor: colors.success },
         computedStatus === 'AVAILABLE' && { borderLeftWidth: 4, borderLeftColor: colors.accent },
+        Platform.OS === 'web' && ({ cursor: isLocked ? 'default' : 'pointer', userSelect: 'none' } as any),
       ]}
-      onPress={onPress}
-      disabled={isLocked}
-      activeOpacity={0.7}
-      // @ts-ignore
-      cursor={isLocked ? 'default' : 'pointer'}
+      onPress={isLocked ? undefined : onPress}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isLocked }}
     >
       <View style={styles.cardHeader}>
         <View style={styles.codeRow}>
@@ -59,16 +55,6 @@ export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, userInte
             {topic.code}
           </Text>
           <Text style={[styles.levelBadge, { color: colors.textMuted }]}>{level.badge}</Text>
-          {isQuickMatch && !isLocked && (
-            <View style={[styles.intentTag, { backgroundColor: colors.accentLight }]}>
-              <Text style={[styles.intentTagText, { color: colors.accent }]}>⚡ 15 min</Text>
-            </View>
-          )}
-          {isDeepMatch && !isLocked && (
-            <View style={[styles.intentTag, { backgroundColor: colors.warningLight }]}>
-              <Text style={[styles.intentTagText, { color: colors.warning }]}>🔬 Práctica</Text>
-            </View>
-          )}
         </View>
 
         <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
@@ -103,7 +89,7 @@ export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, userInte
           {isLocked ? 'Requiere fundamentos previos' : 'Iniciar estudio guiado →'}
         </Text>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -140,15 +126,6 @@ const styles = StyleSheet.create({
   levelBadge: {
     fontSize: 11,
     fontWeight: '600',
-  },
-  intentTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  intentTagText: {
-    fontSize: 10,
-    fontWeight: '800',
   },
   statusBadge: {
     paddingHorizontal: 8,

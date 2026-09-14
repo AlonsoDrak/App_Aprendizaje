@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeMode = 'light' | 'dark';
@@ -26,22 +25,22 @@ export interface AppPalette {
 
 const LIGHT_PALETTE: AppPalette = {
   isDark: false,
-  background: '#F5F7FA',
+  background: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceSubtle: '#F8FAFC',
+  surfaceSubtle: '#F1F5F9',
   card: '#FFFFFF',
   cardBorder: '#E2E8F0',
   textPrimary: '#0F172A',
   textSecondary: '#475569',
   textMuted: '#64748B',
   accent: '#0288D1',
-  accentLight: '#E1F5FE',
-  success: '#2E7D32',
-  successLight: '#E8F5E9',
-  warning: '#F57C00',
-  warningLight: '#FFF8E1',
-  danger: '#D32F2F',
-  dangerLight: '#FFEBEE',
+  accentLight: '#E0F2FE',
+  success: '#16A34A',
+  successLight: '#DCFCE7',
+  warning: '#EA580C',
+  warningLight: '#FFEDD5',
+  danger: '#DC2626',
+  dangerLight: '#FEE2E2',
 };
 
 const DARK_PALETTE: AppPalette = {
@@ -83,24 +82,30 @@ const ThemeContext = createContext<ThemeContextType>({
 const THEME_STORAGE_KEY = '@app_aprendizaje:theme_mode';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const systemScheme = useColorScheme();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(systemScheme === 'dark' ? 'dark' : 'light');
+  // Predeterminado en modo claro 'light'
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
 
   useEffect(() => {
-    AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
-      if (saved === 'light' || saved === 'dark') {
-        setThemeModeState(saved);
-      }
-    });
+    AsyncStorage.getItem(THEME_STORAGE_KEY)
+      .then((saved) => {
+        if (saved === 'light' || saved === 'dark') {
+          setThemeModeState(saved);
+        }
+      })
+      .catch((err) => console.warn('Error loading theme:', err));
   }, []);
 
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
-    AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
+    AsyncStorage.setItem(THEME_STORAGE_KEY, mode).catch(() => {});
   };
 
   const toggleTheme = () => {
-    setThemeMode(themeMode === 'light' ? 'dark' : 'light');
+    setThemeModeState((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      AsyncStorage.setItem(THEME_STORAGE_KEY, next).catch(() => {});
+      return next;
+    });
   };
 
   const isDark = themeMode === 'dark';

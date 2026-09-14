@@ -1,12 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserProgressData, TopicStatus, NotebookEntry, StudySessionIntent } from '../types/curriculum';
+import { UserProgressData, TopicStatus, NotebookEntry } from '../types/curriculum';
 
 const STORAGE_KEY = '@app_aprendizaje:progress_v1';
 
 const INITIAL_PROGRESS: UserProgressData = {
   topics: {},
   notebook: {},
-  selectedIntent: 'STANDARD_30',
   totalFocusedMinutes: 0,
 };
 
@@ -60,12 +59,6 @@ export async function saveNotebookEntry(entry: NotebookEntry): Promise<UserProgr
   current.notebook[entry.topicId] = entry;
   await saveUserProgress(current);
   return current;
-}
-
-export async function setStudyIntent(intent: StudySessionIntent): Promise<void> {
-  const current = await loadUserProgress();
-  current.selectedIntent = intent;
-  await saveUserProgress(current);
 }
 
 export async function resetAllProgress(): Promise<UserProgressData> {

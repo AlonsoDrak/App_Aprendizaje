@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   TextInput,
   Modal,
   Platform,
 } from 'react-native';
-import { TopicNode, NotebookEntry, StudySessionIntent } from '../../types/curriculum';
+import { TopicNode, NotebookEntry } from '../../types/curriculum';
 import { InteractiveVisualModel } from './InteractiveVisualModel';
 import { setTopicStatus, saveNotebookEntry } from '../../services/storage';
 import { useAppTheme } from '../../context/ThemeContext';
@@ -17,7 +18,6 @@ import { ALL_MATH_TOPICS } from '../../data/curriculum/math';
 
 interface StudySessionFlowProps {
   topic: TopicNode;
-  userIntent: StudySessionIntent;
   onFinish: () => void;
   onBack: () => void;
   onSelectNextTopic?: (nextTopic: TopicNode) => void;
@@ -27,7 +27,6 @@ type PhaseIndex = 1 | 2 | 3 | 4;
 
 export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
   topic,
-  userIntent,
   onFinish,
   onBack,
   onSelectNextTopic,
@@ -50,40 +49,18 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Temporizador para intención de estudio
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsElapsed((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimer = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  // Determinar siguiente tema disponible
+  // Siguiente tema en el temario
   const currentIndex = ALL_MATH_TOPICS.findIndex((t) => t.id === topic.id);
   const nextTopic = currentIndex >= 0 && currentIndex < ALL_MATH_TOPICS.length - 1
     ? ALL_MATH_TOPICS[currentIndex + 1]
     : null;
 
-  // Adaptación de requisitos según intención de estudio
-  const isQuickMode = userIntent === 'QUICK_15';
-  const minFeynmanLength = isQuickMode ? 10 : 18;
+  const minFeynmanLength = 15;
 
   const canAdvancePhase = () => {
     if (currentPhase === 1) return true;
     if (currentPhase === 2) return true;
     if (currentPhase === 3) {
-      if (isQuickMode) {
-        // En modo micro-sesión rápida (15 min), basta con haber completado el paso 1 o el análisis de error
-        return selectedOpt1 !== null || selectedOpt3 !== null;
-      }
       return selectedOpt1 !== null && selectedOpt2 !== null && selectedOpt3 !== null;
     }
     if (currentPhase === 4) {
@@ -95,7 +72,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
   const handleCompleteTopic = async () => {
     if (feynmanText.trim().length < minFeynmanLength) {
       setValidationError(
-        `Por favor, escribe al menos ${minFeynmanLength} caracteres explicando el concepto con tus propias palabras para asimilar la retención.`
+        `Por favor, escribe al menos ${minFeynmanLength} caracteres explicando el concepto con tus propias palabras para fijar la retención.`
       );
       return;
     }
@@ -129,27 +106,20 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Barra de control superior con botón de volver robusto */}
+      {/* Barra de control superior con botón de volver ultra-robusto */}
       <View style={[styles.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.cardBorder }]}>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: colors.surfaceSubtle }]}
-          onPress={() => {
-            onBack();
-          }}
-          activeOpacity={0.7}
-          // @ts-ignore
-          cursor="pointer"
+        <Pressable
+          style={({ pressed }) => [
+            styles.backBtn,
+            { backgroundColor: pressed ? colors.cardBorder : colors.surfaceSubtle },
+            Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+          ]}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="Volver al temario principal"
         >
           <Text style={[styles.backBtnText, { color: colors.textPrimary }]}>← Volver al Temario</Text>
-        </TouchableOpacity>
-
-        {/* Indicador de intención de tiempo y cronómetro */}
-        <View style={styles.intentBadgeRow}>
-          <Text style={[styles.intentBadgeText, { color: colors.accent }]}>
-            {isQuickMode ? '⚡ Modo 15m' : userIntent === 'DEEP_PRACTICE_45' ? '🔬 Modo 45m+' : '🎯 Modo 30m'}
-          </Text>
-          <Text style={[styles.timerText, { color: colors.textSecondary }]}>⏱️ {formatTimer(secondsElapsed)}</Text>
-        </View>
+        </Pressable>
 
         {/* Pasos 1, 2, 3, 4 */}
         <View style={styles.phaseIndicator}>
@@ -158,19 +128,21 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
             const isCompleted = currentPhase > step;
             return (
               <View key={step} style={styles.stepDotContainer}>
-                <TouchableOpacity
+                <Pressable
                   disabled={!isCompleted && !isActive}
                   onPress={() => isCompleted && setCurrentPhase(step as PhaseIndex)}
                   style={[
                     styles.stepDot,
+                    { backgroundColor: colors.surfaceSubtle },
                     isActive && { backgroundColor: colors.accent },
                     isCompleted && { backgroundColor: colors.success },
+                    Platform.OS === 'web' && ({ cursor: isCompleted ? 'pointer' : 'default' } as any),
                   ]}
                 >
                   <Text style={[styles.stepDotText, (isActive || isCompleted) && styles.stepDotTextActive]}>
                     {step}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
                 {step < 4 && (
                   <View
                     style={[
@@ -193,21 +165,10 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
         <Text style={[styles.phaseName, { color: colors.textPrimary }]}>
           {currentPhase === 1 && '1. Contexto & Realidad'}
           {currentPhase === 2 && '2. Modelo Mental Visual Interactivo'}
-          {currentPhase === 3 && (isQuickMode ? '3. Práctica Ágil (Modo 15 min)' : '3. Práctica Progresiva Deliberada')}
+          {currentPhase === 3 && '3. Práctica Progresiva Deliberada'}
           {currentPhase === 4 && '4. Retención Activa (Técnica Feynman)'}
         </Text>
       </View>
-
-      {/* Banner de adaptación según la intención elegida */}
-      {isQuickMode && currentPhase === 1 && (
-        <View style={[styles.intentAlertBanner, { backgroundColor: colors.accentLight, borderColor: colors.accent }]}>
-          <Text style={[styles.intentAlertTitle, { color: colors.accent }]}>⚡ Modo Micro-Sesión Activo</Text>
-          <Text style={[styles.intentAlertDesc, { color: colors.textSecondary }]}>
-            {topic.context.quickSummary ||
-              'Esta sesión está optimizada para que en 15 minutos captes el modelo mental y realices una síntesis conceptual rápida.'}
-          </Text>
-        </View>
-      )}
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollInner}>
         {/* FASE 1: CONTEXTO Y REALIDAD */}
@@ -343,19 +304,20 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
                   const isSelected = selectedOpt1 === idx;
                   const isCorrect = idx === topic.practice.step1Guided.correctOptionIndex;
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={idx}
-                      style={[
+                      style={({ pressed }) => [
                         styles.optionButton,
                         { borderColor: colors.cardBorder, backgroundColor: colors.surfaceSubtle },
                         isSelected && (isCorrect ? styles.optionCorrect : styles.optionWrong),
+                        Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
                       ]}
                       onPress={() => setSelectedOpt1(idx)}
                     >
                       <Text style={[styles.optionText, { color: colors.textPrimary }, isSelected && styles.optionTextSelected]}>
                         {opt}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
 
@@ -386,19 +348,20 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
                   const isSelected = selectedOpt2 === idx;
                   const isCorrect = idx === topic.practice.step2Autonomous.correctOptionIndex;
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={idx}
-                      style={[
+                      style={({ pressed }) => [
                         styles.optionButton,
                         { borderColor: colors.cardBorder, backgroundColor: colors.surfaceSubtle },
                         isSelected && (isCorrect ? styles.optionCorrect : styles.optionWrong),
+                        Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
                       ]}
                       onPress={() => setSelectedOpt2(idx)}
                     >
                       <Text style={[styles.optionText, { color: colors.textPrimary }, isSelected && styles.optionTextSelected]}>
                         {opt}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
 
@@ -446,19 +409,20 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
                   const isSelected = selectedOpt3 === idx;
                   const isCorrect = idx === topic.practice.step3ErrorAnalysis.correctOptionIndex;
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={idx}
-                      style={[
+                      style={({ pressed }) => [
                         styles.optionButton,
                         { borderColor: colors.cardBorder, backgroundColor: colors.surfaceSubtle },
                         isSelected && (isCorrect ? styles.optionCorrect : styles.optionWrong),
+                        Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
                       ]}
                       onPress={() => setSelectedOpt3(idx)}
                     >
                       <Text style={[styles.optionText, { color: colors.textPrimary }, isSelected && styles.optionTextSelected]}>
                         {opt}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
 
@@ -540,9 +504,9 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
               </Text>
               <View style={styles.confidenceRow}>
                 {([1, 2, 3, 4, 5] as const).map((star) => (
-                  <TouchableOpacity key={star} style={styles.starBtn} onPress={() => setConfidence(star)}>
+                  <Pressable key={star} style={styles.starBtn} onPress={() => setConfidence(star)}>
                     <Text style={styles.starText}>{confidence >= star ? '★' : '☆'}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             </View>
@@ -553,34 +517,46 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
       {/* Botonera de avance inferior */}
       <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.cardBorder }]}>
         {currentPhase > 1 && (
-          <TouchableOpacity
-            style={[styles.navBtnSecondary, { backgroundColor: colors.surfaceSubtle }]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.navBtnSecondary,
+              { backgroundColor: pressed ? colors.cardBorder : colors.surfaceSubtle },
+              Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+            ]}
             onPress={() => setCurrentPhase((prev) => (prev - 1) as PhaseIndex)}
           >
             <Text style={[styles.navBtnSecondaryText, { color: colors.textPrimary }]}>Anterior</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {currentPhase < 4 ? (
-          <TouchableOpacity
-            style={[styles.navBtnPrimary, { backgroundColor: colors.accent }, !canAdvancePhase() && styles.navBtnDisabled]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.navBtnPrimary,
+              { backgroundColor: colors.accent, opacity: !canAdvancePhase() ? 0.5 : pressed ? 0.85 : 1 },
+              Platform.OS === 'web' && ({ cursor: canAdvancePhase() ? 'pointer' : 'default', userSelect: 'none' } as any),
+            ]}
             disabled={!canAdvancePhase()}
             onPress={() => setCurrentPhase((prev) => (prev + 1) as PhaseIndex)}
           >
             <Text style={styles.navBtnPrimaryText}>
               Continuar a Fase {currentPhase + 1} →
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ) : (
-          <TouchableOpacity
-            style={[styles.navBtnValidate, { backgroundColor: colors.success }, isSubmitting && styles.navBtnDisabled]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.navBtnValidate,
+              { backgroundColor: colors.success, opacity: isSubmitting ? 0.5 : pressed ? 0.85 : 1 },
+              Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+            ]}
             disabled={isSubmitting}
             onPress={handleCompleteTopic}
           >
             <Text style={styles.navBtnValidateText}>
               {isSubmitting ? 'Guardando en Cuaderno...' : '✓ Validar y Registrar Dominio'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
 
@@ -612,19 +588,27 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
 
             <View style={styles.modalActions}>
               {nextTopic && onSelectNextTopic ? (
-                <TouchableOpacity
-                  style={[styles.modalBtnPrimary, { backgroundColor: colors.accent }]}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalBtnPrimary,
+                    { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 },
+                    Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+                  ]}
                   onPress={() => {
                     setShowCompletionModal(false);
                     onSelectNextTopic(nextTopic);
                   }}
                 >
                   <Text style={styles.modalBtnPrimaryText}>🚀 Continuar al Siguiente Tema →</Text>
-                </TouchableOpacity>
+                </Pressable>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.modalBtnSecondary, { backgroundColor: colors.surfaceSubtle }]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.modalBtnSecondary,
+                  { backgroundColor: pressed ? colors.cardBorder : colors.surfaceSubtle },
+                  Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+                ]}
                 onPress={() => {
                   setShowCompletionModal(false);
                   onFinish();
@@ -633,7 +617,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
                 <Text style={[styles.modalBtnSecondaryText, { color: colors.textPrimary }]}>
                   🗺️ Volver al Mapa de Temas (DAG)
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -664,19 +648,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  intentBadgeRow: {
-    alignItems: 'center',
-  },
-  intentBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  timerText: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    marginTop: 1,
-  },
   phaseIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -686,17 +657,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#94A3B8',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepDotText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#94A3B8',
   },
   stepDotTextActive: {
     color: '#FFFFFF',
@@ -724,22 +694,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     flex: 1,
-  },
-  intentAlertBanner: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  intentAlertTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  intentAlertDesc: {
-    fontSize: 12,
-    lineHeight: 16,
   },
   scrollContent: {
     flex: 1,
@@ -1078,9 +1032,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
-  },
-  navBtnDisabled: {
-    opacity: 0.5,
   },
   modalOverlay: {
     flex: 1,

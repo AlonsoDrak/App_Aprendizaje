@@ -111,12 +111,6 @@ export interface TopicNode {
   };
 }
 
-export type StudySessionIntent = 
-  | 'QUICK_15'
-  | 'STANDARD_30'
-  | 'DEEP_PRACTICE_45'
-  | 'REFERENCE_LIBRARY';
-
 export interface NotebookEntry {
   topicId: string;
   topicTitle: string;
@@ -139,6 +133,5 @@ export interface UserTopicState {
 export interface UserProgressData {
   topics: Record<string, UserTopicState>;
   notebook: Record<string, NotebookEntry>;
-  selectedIntent: StudySessionIntent;
   totalFocusedMinutes: number;
 }
