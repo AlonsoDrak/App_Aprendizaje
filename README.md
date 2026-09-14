@@ -1,6 +1,6 @@
-# Welcome to your Expo app 👋
+# App Aprendizaje 📱
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil universal (Android, iOS y Web) construida con [Expo](https://expo.dev) y React Native.
 
 ## Get started
 
