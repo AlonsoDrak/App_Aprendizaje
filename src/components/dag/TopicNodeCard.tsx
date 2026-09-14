@@ -46,6 +46,7 @@ export const TopicNodeCard: React.FC<TopicNodeCardProps> = ({ computed, onPress 
         Platform.OS === 'web' && ({ cursor: isLocked ? 'default' : 'pointer', userSelect: 'none' } as any),
       ]}
       onPress={isLocked ? undefined : onPress}
+      {...(Platform.OS === 'web' ? ({ onClick: isLocked ? undefined : onPress } as any) : {})}
       accessibilityRole="button"
       accessibilityState={{ disabled: isLocked }}
     >

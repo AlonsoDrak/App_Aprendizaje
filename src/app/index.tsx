@@ -94,48 +94,48 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      {/* Cabecera Principal Fija fuera del ScrollView para interactividad inmediata */}
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.cardBorder }]}>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.appTitle, { color: colors.textPrimary }]}>App Aprendizaje</Text>
+          <Text style={[styles.subjectTitle, { color: colors.textSecondary }]}>
+            Matemáticas • De Secundaria a Universidad
+          </Text>
+        </View>
+
+        <View style={styles.headerRight}>
+          {/* Botón de alternar tema con Pressable y cursor pointer garantizado */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.themeToggleBtn,
+              {
+                backgroundColor: isDark ? '#334155' : '#E2E8F0',
+                borderColor: colors.cardBorder,
+                opacity: pressed ? 0.7 : 1,
+              },
+              Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+            ]}
+            onPress={toggleTheme}
+            {...(Platform.OS === 'web' ? ({ onClick: toggleTheme } as any) : {})}
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar tema claro u oscuro"
+          >
+            <Text style={[styles.themeToggleText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
+              {isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}
+            </Text>
+          </Pressable>
+
+          <View style={[styles.badgeAutonomy, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
+            <Text style={[styles.badgeAutonomyText, { color: colors.success }]}>Mastery Learning</Text>
+          </View>
+        </View>
+      </View>
+
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollInner}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
-        {/* Cabecera Principal con Toggle de Modo Oscuro infalible */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={[styles.appTitle, { color: colors.textPrimary }]}>App Aprendizaje</Text>
-            <Text style={[styles.subjectTitle, { color: colors.textSecondary }]}>
-              Matemáticas • De Secundaria a Universidad
-            </Text>
-          </View>
-
-          <View style={styles.headerRight}>
-            {/* Botón de alternar tema con Pressable y cursor pointer garantizado */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.themeToggleBtn,
-                {
-                  backgroundColor: isDark ? '#334155' : '#E2E8F0',
-                  borderColor: colors.cardBorder,
-                  opacity: pressed ? 0.7 : 1,
-                },
-                Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
-              ]}
-              onPress={() => {
-                toggleTheme();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Cambiar tema claro u oscuro"
-            >
-              <Text style={[styles.themeToggleText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-                {isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}
-              </Text>
-            </Pressable>
-
-            <View style={[styles.badgeAutonomy, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
-              <Text style={[styles.badgeAutonomyText, { color: colors.success }]}>Mastery Learning</Text>
-            </View>
-          </View>
-        </View>
 
         {/* Panel de Métricas de Competencia */}
         <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
@@ -302,15 +302,19 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 14,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    zIndex: 100,
   },
   headerLeft: {
     flex: 1,
   },
   headerRight: {
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 6,
   },
   appTitle: {
     fontSize: 22,

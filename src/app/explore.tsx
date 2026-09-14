@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
+  Platform,
   SafeAreaView,
   TextInput,
   RefreshControl,
@@ -59,13 +61,25 @@ export default function LibraryAndNotebookScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.themeToggleBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.cardBorder }]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.themeToggleBtn,
+              {
+                backgroundColor: isDark ? '#334155' : '#E2E8F0',
+                borderColor: colors.cardBorder,
+                opacity: pressed ? 0.7 : 1,
+              },
+              Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+            ]}
             onPress={toggleTheme}
-            activeOpacity={0.7}
+            {...(Platform.OS === 'web' ? ({ onClick: toggleTheme } as any) : {})}
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar tema claro u oscuro"
           >
-            <Text style={styles.themeToggleIcon}>{isDark ? '☀️ Claro' : '🌙 Oscuro'}</Text>
-          </TouchableOpacity>
+            <Text style={[styles.themeToggleIcon, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
+              {isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}
+            </Text>
+          </Pressable>
         </View>
 
         {/* Pestañas Superiores */}

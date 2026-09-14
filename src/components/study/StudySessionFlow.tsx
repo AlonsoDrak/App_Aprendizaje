@@ -31,7 +31,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
   onBack,
   onSelectNextTopic,
 }) => {
-  const { colors, isDark } = useAppTheme();
+  const { colors, isDark, toggleTheme } = useAppTheme();
   const [currentPhase, setCurrentPhase] = useState<PhaseIndex>(1);
 
   // Práctica progresiva (Fase 3)
@@ -106,7 +106,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Barra de control superior con botón de volver ultra-robusto */}
+      {/* Barra de control superior con botón de volver ultra-robusto y alternador de tema */}
       <View style={[styles.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.cardBorder }]}>
         <Pressable
           style={({ pressed }) => [
@@ -115,6 +115,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
             Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
           ]}
           onPress={onBack}
+          {...(Platform.OS === 'web' ? ({ onClick: onBack } as any) : {})}
           accessibilityRole="button"
           accessibilityLabel="Volver al temario principal"
         >
@@ -131,6 +132,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
                 <Pressable
                   disabled={!isCompleted && !isActive}
                   onPress={() => isCompleted && setCurrentPhase(step as PhaseIndex)}
+                  {...(Platform.OS === 'web' ? ({ onClick: () => isCompleted && setCurrentPhase(step as PhaseIndex) } as any) : {})}
                   style={[
                     styles.stepDot,
                     { backgroundColor: colors.surfaceSubtle },
@@ -155,6 +157,27 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
             );
           })}
         </View>
+
+        {/* Botón de alternar tema también presente dentro de la sesión de estudio */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.themeToggleMiniBtn,
+            {
+              backgroundColor: isDark ? '#334155' : '#E2E8F0',
+              borderColor: colors.cardBorder,
+              opacity: pressed ? 0.7 : 1,
+            },
+            Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+          ]}
+          onPress={toggleTheme}
+          {...(Platform.OS === 'web' ? ({ onClick: toggleTheme } as any) : {})}
+          accessibilityRole="button"
+          accessibilityLabel="Cambiar tema claro u oscuro"
+        >
+          <Text style={[styles.themeToggleMiniText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
+            {isDark ? '☀️ Claro' : '🌙 Oscuro'}
+          </Text>
+        </Pressable>
       </View>
 
       {/* Subbarra con código y título de la fase */}
@@ -516,7 +539,7 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
 
       {/* Botonera de avance inferior */}
       <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.cardBorder }]}>
-        {currentPhase > 1 && (
+        {currentPhase > 1 ? (
           <Pressable
             style={({ pressed }) => [
               styles.navBtnSecondary,
@@ -524,8 +547,23 @@ export const StudySessionFlow: React.FC<StudySessionFlowProps> = ({
               Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
             ]}
             onPress={() => setCurrentPhase((prev) => (prev - 1) as PhaseIndex)}
+            {...(Platform.OS === 'web' ? ({ onClick: () => setCurrentPhase((prev) => (prev - 1) as PhaseIndex) } as any) : {})}
           >
             <Text style={[styles.navBtnSecondaryText, { color: colors.textPrimary }]}>Anterior</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [
+              styles.navBtnSecondary,
+              { backgroundColor: pressed ? colors.cardBorder : colors.surfaceSubtle },
+              Platform.OS === 'web' && ({ cursor: 'pointer', userSelect: 'none' } as any),
+            ]}
+            onPress={onBack}
+            {...(Platform.OS === 'web' ? ({ onClick: onBack } as any) : {})}
+            accessibilityRole="button"
+            accessibilityLabel="Salir al temario principal"
+          >
+            <Text style={[styles.navBtnSecondaryText, { color: colors.textPrimary }]}>← Salir al Temario</Text>
           </Pressable>
         )}
 
@@ -638,14 +676,27 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
+    zIndex: 1000,
   },
   backBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
+    zIndex: 1001,
   },
   backBtnText: {
     fontSize: 13,
+    fontWeight: '700',
+  },
+  themeToggleMiniBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    zIndex: 1001,
+  },
+  themeToggleMiniText: {
+    fontSize: 12,
     fontWeight: '700',
   },
   phaseIndicator: {

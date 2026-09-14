@@ -111,6 +111,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const isDark = themeMode === 'dark';
   const colors = isDark ? DARK_PALETTE : LIGHT_PALETTE;
 
+  // En navegadores web, asegurar que el fondo general del documento HTML se actualice de inmediato
+  useEffect(() => {
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.style.backgroundColor = colors.background;
+      document.body.style.color = colors.textPrimary;
+    }
+  }, [colors]);
+
   return (
     <ThemeContext.Provider value={{ themeMode, isDark, colors, toggleTheme, setThemeMode }}>
       {children}
